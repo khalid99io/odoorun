@@ -8,6 +8,8 @@ from rich.markup import escape
 from rich.table import Table
 
 from . import __version__
+from .completion.engine import complete as complete_value
+from .completion.shell import BASH_COMPLETION
 from .discovery import OdooExecutableNotFoundError, find_odoo_executable
 
 cli = typer.Typer(
@@ -37,6 +39,29 @@ def root(
     ] = False,
 ) -> None:
     """Inspect the environment or pass arguments directly to Odoo."""
+
+
+@cli.command("completion")
+def shell_completion(
+    shell: Annotated[
+        str,
+        typer.Argument(help="Shell to generate completion for (currently: bash)."),
+    ] = "bash",
+) -> None:
+    """Print the shell script that enables dynamic completion."""
+    if shell != "bash":
+        raise typer.BadParameter("only Bash completion is currently supported")
+    typer.echo(BASH_COMPLETION, nl=False)
+
+
+@cli.command("__complete", hidden=True)
+def internal_completion(
+    kind: str,
+    prefix: Annotated[str, typer.Argument()] = "",
+) -> None:
+    """Return completion candidates for the shell integration."""
+    for candidate in complete_value(kind, prefix):
+        typer.echo(candidate)
 
 
 @cli.command()

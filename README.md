@@ -65,6 +65,28 @@ desired, add your own alias or shell function:
 alias o=odoorun
 ```
 
+### Database name completion
+
+Enable Bash completion for the current terminal:
+
+```bash
+source <(odoorun completion bash)
+```
+
+To enable it automatically in every new Bash terminal, add the same command to
+your `~/.bashrc` once. Completion is registered for both `odoorun` and `o`.
+
+After that, type a database prefix after `-d` or `--database` and press Tab:
+
+```bash
+o -d demo<Tab>
+odoorun --database=demo<Tab>
+```
+
+Database names are read through `psql`. Existing PostgreSQL connection
+environment variables such as `PGHOST`, `PGPORT`, `PGUSER`, and `PGPASSWORD`
+are respected automatically.
+
 ### Virtual-environment projects
 
 For a project directory named `my-project`, `odoorun` looks for:

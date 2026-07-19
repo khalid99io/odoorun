@@ -18,6 +18,22 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertRegex(result.stdout, r"^odoorun \d+\.\d+\.\d+\s*$")
 
+    def test_prints_bash_database_completion(self) -> None:
+        result = self.runner.invoke(cli, ["completion", "bash"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn('previous" == "-d"', result.stdout)
+        self.assertIn("complete -F _odoorun_complete odoorun", result.stdout)
+        self.assertIn("complete -F _odoorun_complete o", result.stdout)
+
+    @patch("odoorun.cli.complete_value", return_value=["demo", "demo_test"])
+    def test_internal_completion_prints_database_candidates(self, complete) -> None:
+        result = self.runner.invoke(cli, ["__complete", "database", "dem"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.splitlines(), ["demo", "demo_test"])
+        complete.assert_called_once_with("database", "dem")
+
     @patch("odoorun.cli.shutil.which", return_value=None)
     @patch("odoorun.cli.find_odoo_executable")
     def test_doctor_fails_cleanly_when_odoo_is_missing(

@@ -11,6 +11,8 @@ ODOORUN_ARGUMENTS = {
     "--help",
     "--version",
     "-h",
+    "__complete",
+    "completion",
     "doctor",
 }
 
