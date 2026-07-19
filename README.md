@@ -188,20 +188,7 @@ The `--installed` and `--custom` flags are shortcuts for `--state installed`
 and `--source custom`. Native `--addons-path` and the custom `-a` option are
 also supported.
 
-### Tables
-
-List real PostgreSQL tables in a database:
-
-```bash
-odoorun table list -d my_database
-odoorun table list -d my_database --schema public --pattern "sale_*"
-```
-
-Table ownership is intentionally not classified as core or custom because
-multiple Odoo modules can create, extend, share, or manually manage the same
-database table.
-
-All three command groups support `--format table`, `--format plain`, and
+Both command groups support `--format table`, `--format plain`, and
 `--format json`, plus `--no-header` for table/plain output.
 
 ## Development

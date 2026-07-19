@@ -58,22 +58,6 @@ class ManagementCommandTests(unittest.TestCase):
         self.assertEqual(rows[0]["source"], "core")
         self.assertEqual(rows[0]["state"], "available")
 
-    @patch("odoorun.commands.table.query")
-    def test_lists_tables_from_required_database(self, query) -> None:
-        query.return_value = [["public", "sale_order", "BASE TABLE"]]
-
-        response = self.runner.invoke(
-            cli,
-            ["table", "list", "-d", "demo", "--format", "json"],
-        )
-
-        self.assertEqual(response.exit_code, 0)
-        self.assertEqual(
-            json.loads(response.stdout),
-            [{"schema": "public", "table": "sale_order", "type": "BASE TABLE"}],
-        )
-        self.assertEqual(query.call_args.args[1], "demo")
-
     def test_addon_state_requires_database(self) -> None:
         response = self.runner.invoke(
             cli, ["addon", "list", "--state", "installed"]

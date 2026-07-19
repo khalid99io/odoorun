@@ -16,7 +16,6 @@ ODOORUN_ARGUMENTS = {
     "addon",
     "db",
     "doctor",
-    "table",
 }
 
 error_console = Console(stderr=True)
