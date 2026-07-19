@@ -14,7 +14,11 @@ from .discovery import OdooExecutableNotFoundError, find_odoo_executable
 
 cli = typer.Typer(
     add_completion=False,
-    help="Run Odoo from any directory inside an Odoo project.",
+    help=(
+        "Run Odoo from any directory inside an Odoo project.\n\n"
+        "Enable database-name completion in Bash once with: "
+        "odoorun completion install"
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -38,7 +42,11 @@ def root(
         ),
     ] = False,
 ) -> None:
-    """Inspect the environment or pass arguments directly to Odoo."""
+    """Inspect the environment or pass arguments directly to Odoo.
+
+    Enable database-name completion in Bash once with:
+    [bold]odoorun completion install[/bold]
+    """
 
 
 @cli.command("completion")

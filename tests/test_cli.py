@@ -19,6 +19,12 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertRegex(result.stdout, r"^odoorun \d+\.\d+\.\d+\s*$")
 
+    def test_help_shows_completion_setup(self) -> None:
+        result = self.runner.invoke(cli, ["--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("odoorun completion install", result.stdout)
+
     def test_prints_bash_database_completion(self) -> None:
         result = self.runner.invoke(cli, ["completion", "bash"])
 
