@@ -54,6 +54,17 @@ def _venv_addons(venv: Path) -> list[Path]:
     return [path for pattern in patterns for path in venv.glob(pattern)]
 
 
+def find_core_addon_paths(start_directory: Path) -> list[Path]:
+    """Return addon roots supplied by the Odoo source or installed package."""
+    current = start_directory.resolve()
+    executable, _ = find_local_odoo_executable(current)
+    if executable is not None:
+        path = executable.parent / "addons"
+        return [path] if path.is_dir() else []
+    venv = _venv_root(current)
+    return _venv_addons(venv) if venv is not None else []
+
+
 def find_addon_paths(
     start_directory: Path,
     arguments: list[str],

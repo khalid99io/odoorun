@@ -10,6 +10,9 @@ from rich.table import Table
 from . import __version__
 from .completion.engine import complete as complete_value
 from .completion.shell import BASH_COMPLETION, BASH_COMPLETION_SOURCE
+from .commands.addon import app as addon_app
+from .commands.db import app as db_app
+from .commands.table import app as table_app
 from .discovery import OdooExecutableNotFoundError, find_odoo_executable
 
 cli = typer.Typer(
@@ -22,6 +25,9 @@ cli = typer.Typer(
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
+cli.add_typer(db_app, name="db")
+cli.add_typer(addon_app, name="addon")
+cli.add_typer(table_app, name="table")
 
 
 def show_version(value: bool) -> None:

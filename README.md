@@ -154,6 +154,56 @@ odoorun --help
 odoorun --version
 ```
 
+## Inspection commands
+
+### Databases
+
+List Odoo databases and detect their versions:
+
+```bash
+odoorun db list
+odoorun db list --odoo-version 19
+```
+
+Use `--all` to include non-Odoo or inaccessible PostgreSQL databases.
+
+### Addons
+
+List addons available to the current project:
+
+```bash
+odoorun addon list
+odoorun addon list --source custom
+odoorun addon list --source core
+```
+
+Add a database to include and filter its module installation state:
+
+```bash
+odoorun addon list -d my_database --state installed
+odoorun addon list -d my_database --installed --custom
+```
+
+The `--installed` and `--custom` flags are shortcuts for `--state installed`
+and `--source custom`. Native `--addons-path` and the custom `-a` option are
+also supported.
+
+### Tables
+
+List real PostgreSQL tables in a database:
+
+```bash
+odoorun table list -d my_database
+odoorun table list -d my_database --schema public --pattern "sale_*"
+```
+
+Table ownership is intentionally not classified as core or custom because
+multiple Odoo modules can create, extend, share, or manually manage the same
+database table.
+
+All three command groups support `--format table`, `--format plain`, and
+`--format json`, plus `--no-header` for table/plain output.
+
 ## Development
 
 ```bash

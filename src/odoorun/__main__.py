@@ -13,7 +13,10 @@ ODOORUN_ARGUMENTS = {
     "-h",
     "__complete",
     "completion",
+    "addon",
+    "db",
     "doctor",
+    "table",
 }
 
 error_console = Console(stderr=True)
