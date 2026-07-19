@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from .cli import cli
 from .discovery import OdooExecutableNotFoundError
-from .runner import OdooExecutionError, run_odoo
+from .runner import OdooArgumentError, OdooExecutionError, run_odoo
 
 ODOORUN_ARGUMENTS = {
     "--help",
@@ -51,6 +51,12 @@ def show_execution_error(error: OdooExecutionError) -> None:
     error_console.print("Check the file permissions and try again.")
 
 
+def show_argument_error(error: OdooArgumentError) -> None:
+    error_console.print()
+    error_console.print("[bold red]Invalid Odoo addons configuration[/bold red]")
+    error_console.print(f"[yellow]{escape(str(error))}[/yellow]")
+
+
 def main() -> None:
     argv = sys.argv[1:]
 
@@ -66,6 +72,9 @@ def main() -> None:
     except OdooExecutionError as error:
         show_execution_error(error)
         raise SystemExit(1) from None
+    except OdooArgumentError as error:
+        show_argument_error(error)
+        raise SystemExit(2) from None
 
 
 if __name__ == "__main__":
