@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from odoorun.cli import cli
@@ -64,7 +65,7 @@ class ManagementCommandTests(unittest.TestCase):
         )
 
         self.assertNotEqual(response.exit_code, 0)
-        self.assertIn("requires --database", response.output)
+        self.assertIn("requires --database", strip_ansi(response.output))
 
 
 if __name__ == "__main__":
