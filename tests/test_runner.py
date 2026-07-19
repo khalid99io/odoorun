@@ -1,18 +1,21 @@
+import tempfile
 import os
 import unittest
-from unittest.mock import patch
-
-import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from odoorun.runner import OdooArgumentError, OdooExecutionError, build_odoo_args, run_odoo
 
 
 class RunOdooTests(unittest.TestCase):
     def test_adds_default_addons_for_venv_odoo(self) -> None:
-        with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": "/home/khalid/venvs"}):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            venv_root = Path(temporary_directory) / "venvs"
+            executable = venv_root / "demo-project" / "bin" / "odoo"
+            with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": str(venv_root)}):
+                result = build_odoo_args(str(executable), ["-d", "demo"])
             self.assertEqual(
-                build_odoo_args("/home/khalid/venvs/obusiness-v2/bin/odoo", ["-d", "demo"]),
+                result,
                 ["--addons=odoo/addons", "-d", "demo"],
             )
 
@@ -35,27 +38,37 @@ class RunOdooTests(unittest.TestCase):
                 build_odoo_args(str(repo / "odoo-bin"), ["-a", "missing"])
 
     @patch("odoorun.runner.os.execv")
-    @patch("odoorun.runner.find_odoo_executable", return_value="/home/khalid/venvs/demo/bin/odoo")
-    def test_forwards_arguments_unchanged(self, find_executable, execv) -> None:
-        with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": "/home/khalid/venvs"}):
-            run_odoo(["--database", "example", "--dev=all"])
+    def test_forwards_arguments_unchanged(self, execv) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            venv_root = Path(temporary_directory) / "venvs"
+            executable = venv_root / "demo" / "bin" / "odoo"
+            with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": str(venv_root)}):
+                with patch(
+                    "odoorun.runner.find_odoo_executable",
+                    return_value=str(executable),
+                ) as find_executable:
+                    run_odoo(["--database", "example", "--dev=all"])
 
-        find_executable.assert_called_once_with()
-        execv.assert_called_once_with(
-            "/home/khalid/venvs/demo/bin/odoo",
-            ["/home/khalid/venvs/demo/bin/odoo", "--addons=odoo/addons", "--database", "example", "--dev=all"],
-        )
+            find_executable.assert_called_once_with()
+            execv.assert_called_once_with(
+                str(executable),
+                [str(executable), "--addons=odoo/addons", "--database", "example", "--dev=all"],
+            )
 
     @patch(
         "odoorun.runner.os.execv",
         side_effect=PermissionError(13, "Permission denied"),
     )
-    @patch("odoorun.runner.find_odoo_executable", return_value="/home/khalid/venvs/demo/bin/odoo")
-    def test_wraps_operating_system_errors(self, _find_executable, _execv) -> None:
-        with self.assertRaises(OdooExecutionError) as context:
-            run_odoo([])
+    def test_wraps_operating_system_errors(self, execv) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            executable = Path(temporary_directory) / "venvs" / "demo" / "bin" / "odoo"
+            with patch(
+                "odoorun.runner.find_odoo_executable", return_value=str(executable)
+            ):
+                with self.assertRaises(OdooExecutionError) as context:
+                    run_odoo([])
 
-        self.assertEqual(context.exception.executable, "/home/khalid/venvs/demo/bin/odoo")
+        self.assertEqual(context.exception.executable, str(executable))
         self.assertEqual(context.exception.reason, "Permission denied")
 
 

@@ -55,9 +55,9 @@ class FindOdooExecutableTests(unittest.TestCase):
     def test_finds_odoo_from_project_virtual_environment(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             home = Path(temporary_directory)
-            project = home / "PycharmProjects" / "obusiness-2"
+            project = home / "projects" / "demo-project"
             project.mkdir(parents=True)
-            executable = home / "venvs" / "obusiness-v2" / "bin" / "odoo"
+            executable = home / "venvs" / "demo-venv" / "bin" / "odoo"
             executable.parent.mkdir(parents=True)
             self.make_executable(executable)
 
@@ -66,7 +66,7 @@ class FindOdooExecutableTests(unittest.TestCase):
                 {
                     "PATH": "",
                     "HOME": str(home),
-                    "ODOORUN_VENV_NAME": "obusiness-v2",
+                    "ODOORUN_VENV_NAME": "demo-venv",
                 },
             ):
                 result = find_odoo_executable(project)
