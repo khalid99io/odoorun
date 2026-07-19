@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch
 
@@ -9,10 +10,11 @@ from odoorun.runner import OdooArgumentError, OdooExecutionError, build_odoo_arg
 
 class RunOdooTests(unittest.TestCase):
     def test_adds_default_addons_for_venv_odoo(self) -> None:
-        self.assertEqual(
-            build_odoo_args("/home/khalid/venvs/obusiness-v2/bin/odoo", ["-d", "demo"]),
-            ["--addons=odoo/addons", "-d", "demo"],
-        )
+        with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": "/home/khalid/venvs"}):
+            self.assertEqual(
+                build_odoo_args("/home/khalid/venvs/obusiness-v2/bin/odoo", ["-d", "demo"]),
+                ["--addons=odoo/addons", "-d", "demo"],
+            )
 
     def test_builds_and_validates_source_addons_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -35,7 +37,8 @@ class RunOdooTests(unittest.TestCase):
     @patch("odoorun.runner.os.execv")
     @patch("odoorun.runner.find_odoo_executable", return_value="/home/khalid/venvs/demo/bin/odoo")
     def test_forwards_arguments_unchanged(self, find_executable, execv) -> None:
-        run_odoo(["--database", "example", "--dev=all"])
+        with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": "/home/khalid/venvs"}):
+            run_odoo(["--database", "example", "--dev=all"])
 
         find_executable.assert_called_once_with()
         execv.assert_called_once_with(
