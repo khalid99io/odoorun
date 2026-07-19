@@ -9,7 +9,7 @@ from rich.table import Table
 
 from . import __version__
 from .completion.engine import complete as complete_value
-from .completion.shell import BASH_COMPLETION
+from .completion.shell import BASH_COMPLETION, BASH_COMPLETION_SOURCE
 from .discovery import OdooExecutableNotFoundError, find_odoo_executable
 
 cli = typer.Typer(
@@ -49,8 +49,21 @@ def shell_completion(
     ] = "bash",
 ) -> None:
     """Print the shell script that enables dynamic completion."""
+    if shell == "install":
+        bashrc = Path.home() / ".bashrc"
+        existing = bashrc.read_text(encoding="utf-8") if bashrc.exists() else ""
+        if BASH_COMPLETION_SOURCE not in existing:
+            separator = "" if not existing or existing.endswith("\n") else "\n"
+            bashrc.write_text(
+                existing + separator + "\n" + BASH_COMPLETION_SOURCE,
+                encoding="utf-8",
+            )
+            typer.echo(f"Bash completion enabled in {bashrc}")
+        else:
+            typer.echo(f"Bash completion is already enabled in {bashrc}")
+        return
     if shell != "bash":
-        raise typer.BadParameter("only Bash completion is currently supported")
+        raise typer.BadParameter("use 'bash' or 'install'")
     typer.echo(BASH_COMPLETION, nl=False)
 
 

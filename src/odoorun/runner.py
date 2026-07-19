@@ -39,13 +39,15 @@ def _custom_addons(args: list[str]) -> tuple[list[str], list[str]]:
     index = 0
     while index < len(args):
         value = args[index]
-        if value in {"-a", "--addons-path"}:
+        if value == "-a":
             index += 1
             if index == len(args) or not args[index].strip():
                 raise OdooArgumentError(f"{value} requires a comma-separated path list")
             custom.extend(part.strip() for part in args[index].split(",") if part.strip())
-        elif value.startswith("-a=") or value.startswith("--addons-path="):
-            custom.extend(part.strip() for part in value.split("=", 1)[1].split(",") if part.strip())
+        elif value.startswith("-a="):
+            custom.extend(
+                part.strip() for part in value.split("=", 1)[1].split(",") if part.strip()
+            )
         else:
             forwarded.append(value)
         index += 1
@@ -58,8 +60,15 @@ def build_odoo_args(executable: str, args: list[str]) -> list[str]:
     if Path(executable).name != "odoo-bin":
         if not _is_venv_odoo(executable):
             return forwarded
-        if not any(arg == "--addons" or arg.startswith("--addons=") for arg in forwarded):
-            forwarded.insert(0, "--addons=odoo/addons")
+        if any(
+            arg == "--addons-path"
+            or arg.startswith("--addons-path=")
+            or arg == "--addons"
+            or arg.startswith("--addons=")
+            for arg in forwarded
+        ):
+            return forwarded
+        forwarded.insert(0, "--addons=odoo/addons")
         return forwarded
 
     repo_root = Path(executable).parent
@@ -67,6 +76,8 @@ def build_odoo_args(executable: str, args: list[str]) -> list[str]:
     if not addons.is_dir():
         raise OdooArgumentError(f"Odoo addons directory not found: {addons}")
     paths = [str(addons)]
+    if any(arg == "--addons-path" or arg.startswith("--addons-path=") for arg in forwarded):
+        return forwarded
     for item in custom:
         candidate = Path(item).expanduser()
         if not candidate.is_absolute():

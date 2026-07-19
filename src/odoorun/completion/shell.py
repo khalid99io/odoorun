@@ -24,4 +24,9 @@ _odoorun_complete() {
 
 complete -F _odoorun_complete odoorun
 complete -F _odoorun_complete o
+complete -F _odoorun_complete odoo
+complete -F _odoorun_complete odoo-bin
+complete -F _odoorun_complete ./odoo-bin
 '''
+
+BASH_COMPLETION_SOURCE = "# odoorun database completion\nsource <(odoorun completion bash)\n"

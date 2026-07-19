@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -25,6 +26,17 @@ class CliTests(unittest.TestCase):
         self.assertIn('previous" == "-d"', result.stdout)
         self.assertIn("complete -F _odoorun_complete odoorun", result.stdout)
         self.assertIn("complete -F _odoorun_complete o", result.stdout)
+
+    def test_install_completion_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            bashrc = Path(temporary_directory) / ".bashrc"
+            with patch.dict("os.environ", {"HOME": temporary_directory}):
+                first = self.runner.invoke(cli, ["completion", "install"])
+                second = self.runner.invoke(cli, ["completion", "install"])
+
+            self.assertEqual(first.exit_code, 0)
+            self.assertEqual(second.exit_code, 0)
+            self.assertEqual(bashrc.read_text(encoding="utf-8").count("source <(odoorun completion bash)"), 1)
 
     @patch("odoorun.cli.complete_value", return_value=["demo", "demo_test"])
     def test_internal_completion_prints_database_candidates(self, complete) -> None:

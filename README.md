@@ -73,8 +73,14 @@ Enable Bash completion for the current terminal:
 source <(odoorun completion bash)
 ```
 
-To enable it automatically in every new Bash terminal, add the same command to
-your `~/.bashrc` once. Completion is registered for both `odoorun` and `o`.
+To enable it automatically in every new Bash terminal, run this once:
+
+```bash
+odoorun completion install
+```
+
+This adds an idempotent source line to `~/.bashrc`. Completion is registered
+for `odoorun`, `o`, `odoo`, `odoo-bin`, and `./odoo-bin`.
 
 After that, type a database prefix after `-d` or `--database` and press Tab:
 
@@ -111,14 +117,21 @@ shell's prompt, so prompt decoration remains a shell responsibility.
 
 For a checkout containing an executable `odoo-bin`, the built-in `addons`
 directory is passed automatically. Additional addon directories can be listed
-with `-a` or `--addons-path`; relative paths are resolved from the checkout's
-parent directory:
+with `-a`; relative paths are resolved from the checkout's parent directory:
 
 ```bash
 odoorun -a custom-addons,enterprise -d my_database
 ```
 
 Each directory must exist. Missing directories are reported before Odoo starts.
+Alternatively, pass Odoo's native `--addons-path` option directly. When it is
+present, odoorun leaves it unchanged and does not add or validate its own path:
+
+```bash
+odoorun --addons-path="addons,custom-addons" -d my_database
+```
+
+This lets users fully control Odoo's native addons-path behavior.
 
 ## Diagnostics
 

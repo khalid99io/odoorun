@@ -19,6 +19,16 @@ class RunOdooTests(unittest.TestCase):
                 ["--addons=odoo/addons", "-d", "demo"],
             )
 
+    def test_preserves_native_addons_path_for_venv_odoo(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            venv_root = Path(temporary_directory) / "venvs"
+            executable = venv_root / "demo-project" / "bin" / "odoo"
+            with patch.dict(os.environ, {"ODOORUN_VENV_ROOT": str(venv_root)}):
+                result = build_odoo_args(
+                    str(executable), ["--addons-path=preferred", "-d", "demo"]
+                )
+            self.assertEqual(result, ["--addons-path=preferred", "-d", "demo"])
+
     def test_builds_and_validates_source_addons_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo = Path(temporary_directory) / "odoo"
@@ -36,6 +46,16 @@ class RunOdooTests(unittest.TestCase):
             (repo / "addons").mkdir(parents=True)
             with self.assertRaises(OdooArgumentError):
                 build_odoo_args(str(repo / "odoo-bin"), ["-a", "missing"])
+
+    def test_preserves_native_addons_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = Path(temporary_directory) / "odoo"
+            (repo / "addons").mkdir(parents=True)
+            result = build_odoo_args(
+                str(repo / "odoo-bin"),
+                ["--addons-path=preferred,addons", "-d", "demo"],
+            )
+            self.assertEqual(result, ["--addons-path=preferred,addons", "-d", "demo"])
 
     @patch("odoorun.runner.os.execv")
     def test_forwards_arguments_unchanged(self, execv) -> None:
