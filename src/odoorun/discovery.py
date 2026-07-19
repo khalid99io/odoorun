@@ -41,13 +41,9 @@ def find_local_odoo_executable(
 
 
 def _venv_names(project_name: str) -> tuple[str, ...]:
-    """Return likely virtual-environment names for a project directory."""
-    names = [project_name]
-    if project_name.endswith("-2"):
-        names.append(f"{project_name[:-2]}-v2")
-    elif project_name.endswith("-v2"):
-        names.append(f"{project_name[:-3]}-2")
-    return tuple(dict.fromkeys(names))
+    """Return configured and conventional virtual-environment names."""
+    configured = os.environ.get("ODOORUN_VENV_NAME", "").strip()
+    return tuple(dict.fromkeys(name for name in (configured, project_name) if name))
 
 
 def find_venv_odoo_executable(start_directory: Path) -> str | None:
@@ -57,7 +53,9 @@ def find_venv_odoo_executable(start_directory: Path) -> str | None:
     invoking the executable from the venv gives Odoo the correct interpreter
     and environment without attempting to modify the caller's shell.
     """
-    venv_root = Path.home() / "venvs"
+    venv_root = Path(
+        os.environ.get("ODOORUN_VENV_ROOT", str(Path.home() / "venvs"))
+    ).expanduser()
     for directory in (start_directory, *start_directory.parents):
         for name in _venv_names(directory.name):
             candidate = venv_root / name / "bin" / "odoo"

@@ -61,7 +61,14 @@ class FindOdooExecutableTests(unittest.TestCase):
             executable.parent.mkdir(parents=True)
             self.make_executable(executable)
 
-            with patch.dict(os.environ, {"PATH": "", "HOME": str(home)}):
+            with patch.dict(
+                os.environ,
+                {
+                    "PATH": "",
+                    "HOME": str(home),
+                    "ODOORUN_VENV_NAME": "obusiness-v2",
+                },
+            ):
                 result = find_odoo_executable(project)
 
             self.assertEqual(result, str(executable))

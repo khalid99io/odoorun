@@ -3,7 +3,14 @@ name = "odoorun"
 version = "0.1.0"
 description = "A modern CLI for running and managing Odoo projects."
 readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Khalid A. Dev", email = "khalid.a.dev@gmail.com" }]
 requires-python = ">=3.10"
+project-urls = {
+    Homepage = "https://github.com/khalid99io/odoorun",
+    Repository = "https://github.com/khalid99io/odoorun",
+    Issues = "https://github.com/khalid99io/odoorun/issues",
+}
 keywords = ["cli", "odoo"]
 classifiers = [
     "Development Status :: 3 - Alpha",

@@ -18,6 +18,20 @@ class OdooArgumentError(RuntimeError):
     """Raised when odoorun cannot construct a valid Odoo command."""
 
 
+def _is_venv_odoo(executable: str) -> bool:
+    """Identify an Odoo executable selected from the configured venv root."""
+    if Path(executable).name != "odoo":
+        return False
+    root = Path(
+        os.environ.get("ODOORUN_VENV_ROOT", str(Path.home() / "venvs"))
+    ).expanduser().resolve()
+    try:
+        relative = Path(executable).resolve().relative_to(root)
+    except ValueError:
+        return False
+    return len(relative.parts) == 3 and relative.parts[-2:] == ("bin", "odoo")
+
+
 def _custom_addons(args: list[str]) -> tuple[list[str], list[str]]:
     """Remove odoorun's ``-a`` option and return its comma-separated values."""
     forwarded: list[str] = []
@@ -42,6 +56,8 @@ def build_odoo_args(executable: str, args: list[str]) -> list[str]:
     """Add context-specific addon paths and validate custom addon folders."""
     forwarded, custom = _custom_addons(args)
     if Path(executable).name != "odoo-bin":
+        if not _is_venv_odoo(executable):
+            return forwarded
         if not any(arg == "--addons" or arg.startswith("--addons=") for arg in forwarded):
             forwarded.insert(0, "--addons=odoo/addons")
         return forwarded

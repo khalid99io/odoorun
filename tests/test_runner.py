@@ -33,26 +33,26 @@ class RunOdooTests(unittest.TestCase):
                 build_odoo_args(str(repo / "odoo-bin"), ["-a", "missing"])
 
     @patch("odoorun.runner.os.execv")
-    @patch("odoorun.runner.find_odoo_executable", return_value="/opt/venv/bin/odoo")
+    @patch("odoorun.runner.find_odoo_executable", return_value="/home/khalid/venvs/demo/bin/odoo")
     def test_forwards_arguments_unchanged(self, find_executable, execv) -> None:
         run_odoo(["--database", "example", "--dev=all"])
 
         find_executable.assert_called_once_with()
         execv.assert_called_once_with(
-            "/opt/venv/bin/odoo",
-            ["/opt/venv/bin/odoo", "--addons=odoo/addons", "--database", "example", "--dev=all"],
+            "/home/khalid/venvs/demo/bin/odoo",
+            ["/home/khalid/venvs/demo/bin/odoo", "--addons=odoo/addons", "--database", "example", "--dev=all"],
         )
 
     @patch(
         "odoorun.runner.os.execv",
         side_effect=PermissionError(13, "Permission denied"),
     )
-    @patch("odoorun.runner.find_odoo_executable", return_value="/opt/venv/bin/odoo")
+    @patch("odoorun.runner.find_odoo_executable", return_value="/home/khalid/venvs/demo/bin/odoo")
     def test_wraps_operating_system_errors(self, _find_executable, _execv) -> None:
         with self.assertRaises(OdooExecutionError) as context:
             run_odoo([])
 
-        self.assertEqual(context.exception.executable, "/opt/venv/bin/odoo")
+        self.assertEqual(context.exception.executable, "/home/khalid/venvs/demo/bin/odoo")
         self.assertEqual(context.exception.reason, "Permission denied")
 
 
