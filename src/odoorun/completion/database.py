@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import subprocess
 
+QUERY_TIMEOUT_SECONDS = 2
+
 
 def complete(prefix: str) -> list[str]:
-    """
-    Return PostgreSQL databases matching the given prefix.
+    """Return PostgreSQL databases matching ``prefix``.
+
+    Completion must stay responsive, so unavailable or slow PostgreSQL
+    connections are treated as having no suggestions.
     """
     command = [
         "psql",
@@ -19,14 +23,15 @@ def complete(prefix: str) -> list[str]:
             capture_output=True,
             text=True,
             check=True,
+            timeout=QUERY_TIMEOUT_SECONDS,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.SubprocessError, OSError, UnicodeError):
         return []
 
-    databases = result.stdout.splitlines()
-
     return sorted(
-        db
-        for db in databases
-        if db.startswith(prefix)
+        {
+            database
+            for database in result.stdout.splitlines()
+            if database and database.startswith(prefix)
+        }
     )
