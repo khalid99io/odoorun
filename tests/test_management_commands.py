@@ -1,13 +1,18 @@
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from odoorun.cli import cli
+
+
+def strip_ansi(value: str) -> str:
+    """Remove terminal styling without adding a test-only dependency."""
+    return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", value)
 
 
 class ManagementCommandTests(unittest.TestCase):
