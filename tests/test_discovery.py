@@ -52,6 +52,20 @@ class FindOdooExecutableTests(unittest.TestCase):
 
             self.assertEqual(result, str(executable))
 
+    def test_finds_odoo_from_project_virtual_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            home = Path(temporary_directory)
+            project = home / "PycharmProjects" / "obusiness-2"
+            project.mkdir(parents=True)
+            executable = home / "venvs" / "obusiness-v2" / "bin" / "odoo"
+            executable.parent.mkdir(parents=True)
+            self.make_executable(executable)
+
+            with patch.dict(os.environ, {"PATH": "", "HOME": str(home)}):
+                result = find_odoo_executable(project)
+
+            self.assertEqual(result, str(executable))
+
     def test_reports_nearest_non_executable_odoo_bin(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)

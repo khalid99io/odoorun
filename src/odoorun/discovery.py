@@ -40,6 +40,32 @@ def find_local_odoo_executable(
     return None, non_executable
 
 
+def _venv_names(project_name: str) -> tuple[str, ...]:
+    """Return likely virtual-environment names for a project directory."""
+    names = [project_name]
+    if project_name.endswith("-2"):
+        names.append(f"{project_name[:-2]}-v2")
+    elif project_name.endswith("-v2"):
+        names.append(f"{project_name[:-3]}-2")
+    return tuple(dict.fromkeys(names))
+
+
+def find_venv_odoo_executable(start_directory: Path) -> str | None:
+    """Find ``odoo`` in the conventional ``~/venvs/<project>/bin`` location.
+
+    This is the process-local equivalent of sourcing an activation script:
+    invoking the executable from the venv gives Odoo the correct interpreter
+    and environment without attempting to modify the caller's shell.
+    """
+    venv_root = Path.home() / "venvs"
+    for directory in (start_directory, *start_directory.parents):
+        for name in _venv_names(directory.name):
+            candidate = venv_root / name / "bin" / "odoo"
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return str(candidate)
+    return None
+
+
 def find_odoo_executable(start_directory: Path | None = None) -> str:
     """Return the best available Odoo executable.
 
@@ -52,6 +78,10 @@ def find_odoo_executable(start_directory: Path | None = None) -> str:
 
     if local_executable is not None:
         return str(local_executable)
+
+    venv_executable = find_venv_odoo_executable(current)
+    if venv_executable is not None:
+        return venv_executable
 
     path_executable = shutil.which("odoo")
 
