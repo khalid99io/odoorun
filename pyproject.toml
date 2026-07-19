@@ -1,0 +1,17 @@
+[project]
+name = "odoorun"
+version = "0.1.0"
+description = "A modern CLI for running and managing Odoo projects."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rich>=15.0.0",
+    "typer>=0.26.8",
+]
+
+[project.scripts]
+odoorun = "odoorun.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
