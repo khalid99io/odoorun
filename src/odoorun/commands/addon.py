@@ -15,7 +15,14 @@ from .common import OutputFormat, render_rows
 from .postgres import PostgreSQLError, query
 
 app = typer.Typer(
-    help="Inspect addons available to the current project.",
+    help="List addon manifests from project, source, venv, or explicit paths.",
+    epilog=(
+        "Examples:\n"
+        "  odoorun addon list\n"
+        "  odoorun addon list --custom\n"
+        "  odoorun addon list -d demo --installed --custom\n"
+        "  odoorun addon list --addons-path addons,../enterprise"
+    ),
     no_args_is_help=True,
 )
 
@@ -63,46 +70,100 @@ def _matches_state(actual: str, requested: AddonState) -> bool:
     return actual == requested.value
 
 
-@app.command("list")
+@app.command(
+    "list",
+    epilog=(
+        "Examples:\n\n"
+        "  odoorun addon list --custom\n\n"
+        "  odoorun addon list -d demo --installed --custom\n\n"
+        "  odoorun addon list --addons-path addons,../enterprise"
+    ),
+)
 def list_addons(
     database: Annotated[
         str | None,
-        typer.Option("--database", "-d", help="Show module state in this database."),
+        typer.Option(
+            "--database",
+            "-d",
+            help=(
+                "Query ir_module_module in this database and show each "
+                "filesystem addon's installation state."
+            ),
+        ),
     ] = None,
     source: Annotated[
         AddonSource,
-        typer.Option("--source", help="Filter by core or custom source."),
+        typer.Option(
+            "--source",
+            help="Show all addons, Odoo core addons, or project/custom addons.",
+        ),
     ] = AddonSource.all,
     state: Annotated[
         AddonState,
-        typer.Option("--state", help="Filter by database installation state."),
+        typer.Option(
+            "--state",
+            help=(
+                "Filter by database state; installed/uninstalled/upgrade "
+                "requires -d/--database."
+            ),
+        ),
     ] = AddonState.all,
     installed: Annotated[
         bool,
-        typer.Option("--installed", help="Shortcut for --state installed."),
+        typer.Option(
+            "--installed",
+            help="Show installed filesystem addons; shortcut requiring -d.",
+        ),
     ] = False,
     custom: Annotated[
         bool,
-        typer.Option("--custom", help="Shortcut for --source custom."),
+        typer.Option(
+            "--custom",
+            help="Show only project/custom addons; shortcut for --source custom.",
+        ),
     ] = False,
     addons_path: Annotated[
         str | None,
-        typer.Option("--addons-path", help="Use this native Odoo addons path."),
+        typer.Option(
+            "--addons-path",
+            help=(
+                "Override automatic discovery with a comma-separated native "
+                "Odoo addons path."
+            ),
+        ),
     ] = None,
     additional: Annotated[
         str | None,
-        typer.Option("-a", help="Comma-separated custom addon directories."),
+        typer.Option(
+            "-a",
+            help=(
+                "Add comma-separated custom directories. Relative paths use "
+                "the parent of an Odoo source checkout."
+            ),
+        ),
     ] = None,
     output: Annotated[
         OutputFormat,
-        typer.Option("--format", help="Output format."),
+        typer.Option(
+            "--format",
+            help="Render a Rich table, tab-separated plain text, or JSON.",
+        ),
     ] = OutputFormat.table,
     no_header: Annotated[
         bool,
-        typer.Option("--no-header", help="Hide headings in table/plain output."),
+        typer.Option(
+            "--no-header",
+            help="Hide column headings in table and plain output.",
+        ),
     ] = False,
 ) -> None:
-    """List addon modules found in the effective addon paths."""
+    """List filesystem addons containing an Odoo manifest.
+
+    Discovery uses the current source checkout, linked virtual environment,
+    project odoo/addons directory, or explicit path options. Supplying -d does
+    not find addons in a database; it annotates discovered addons with their
+    ir_module_module state and enables --state/--installed filtering.
+    """
     if installed:
         if state != AddonState.all:
             raise typer.BadParameter("use either --installed or --state, not both")

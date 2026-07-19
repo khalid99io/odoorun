@@ -25,6 +25,22 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn("odoorun completion install", result.stdout)
 
+    def test_help_summarizes_launch_and_management_commands(self) -> None:
+        result = self.runner.invoke(cli, ["--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("Arguments that are not odoorun tool", result.stdout)
+        self.assertIn("odoorun db list", result.stdout)
+        self.assertIn("odoorun addon list", result.stdout)
+        self.assertIn("Automatic completion", result.stdout)
+
+    def test_addon_help_explains_database_filtering(self) -> None:
+        result = self.runner.invoke(cli, ["addon", "list", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("not find addons in a database", result.stdout)
+        self.assertIn("ir_module_module state", result.stdout)
+
     def test_prints_bash_database_completion(self) -> None:
         result = self.runner.invoke(cli, ["completion", "bash"])
 

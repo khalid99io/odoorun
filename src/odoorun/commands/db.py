@@ -6,7 +6,16 @@ from rich.console import Console
 from .common import OutputFormat, render_rows
 from .postgres import PostgreSQLError, query
 
-app = typer.Typer(help="Inspect PostgreSQL and Odoo databases.", no_args_is_help=True)
+app = typer.Typer(
+    help="List PostgreSQL databases and identify Odoo database versions.",
+    epilog=(
+        "Examples:\n"
+        "  odoorun db list\n"
+        "  odoorun db list --odoo-version 19\n"
+        "  odoorun db list --all --format json"
+    ),
+    no_args_is_help=True,
+)
 
 
 def _inspect_database(database: str) -> tuple[str, str]:
@@ -28,28 +37,53 @@ def _inspect_database(database: str) -> tuple[str, str]:
         return "inaccessible", ""
 
 
-@app.command("list")
+@app.command(
+    "list",
+    epilog=(
+        "Examples:\n\n"
+        "  odoorun db list\n\n"
+        "  odoorun db list --odoo-version 19\n\n"
+        "  odoorun db list --all --format json"
+    ),
+)
 def list_databases(
     odoo_version: Annotated[
         str | None,
         typer.Option(
-            "--odoo-version", help="Only show this Odoo major/version prefix."
+            "--odoo-version",
+            help=(
+                "Only show Odoo databases whose base-module version starts "
+                "with this value (for example, 19 or 19.0)."
+            ),
         ),
     ] = None,
     all_databases: Annotated[
         bool,
-        typer.Option("--all", help="Include non-Odoo and inaccessible databases."),
+        typer.Option(
+            "--all",
+            help="Also show regular PostgreSQL and inaccessible databases.",
+        ),
     ] = False,
     output: Annotated[
         OutputFormat,
-        typer.Option("--format", help="Output format."),
+        typer.Option(
+            "--format",
+            help="Render a Rich table, tab-separated plain text, or JSON.",
+        ),
     ] = OutputFormat.table,
     no_header: Annotated[
         bool,
-        typer.Option("--no-header", help="Hide headings in table/plain output."),
+        typer.Option(
+            "--no-header",
+            help="Hide column headings in table and plain output.",
+        ),
     ] = False,
 ) -> None:
-    """List accessible Odoo databases and their detected versions."""
+    """List Odoo databases and detect versions from their installed base module.
+
+    By default, regular PostgreSQL databases and databases that cannot be
+    inspected are hidden. Use --all to include them.
+    """
     try:
         names = query(
             "SELECT datname FROM pg_database "

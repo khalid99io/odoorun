@@ -1,214 +1,270 @@
 # odoorun
 
-`odoorun` is a portable command-line launcher for Odoo. It finds an Odoo
-executable from the current project (or a parent directory), prepares the
-appropriate addons path, and forwards the remaining arguments unchanged.
+`odoorun` is a portable command-line launcher and inspection tool for Odoo
+development projects. It discovers the appropriate Odoo executable, prepares
+addon paths, forwards ordinary Odoo options, completes database and module
+names, and provides read-only database/addon inspection commands.
 
-It does not require symlinks, shell aliases, a modified `.bashrc`, or a
-machine-specific configuration.
+No symlink, alias, or machine-specific path is required. The optional `o` alias
+and Bash completion are shell conveniences.
+
+## Features
+
+- Run a project-local `odoo-bin`, a linked-venv `odoo`, or `odoo` on `PATH`.
+- Run from a project root or any nested directory.
+- Configure standard and custom addon paths automatically.
+- Complete PostgreSQL database names after `-d`/`--database`.
+- Complete module names after `-u`/`--update` and `-i`/`--init`.
+- List Odoo databases and detect their versions.
+- List core/custom addon manifests and optionally show database module state.
+- Produce human-readable tables, tab-separated text, or JSON.
 
 ## Requirements
 
-- Python 3.10 or newer
-- An Odoo installation or source checkout
-- `psql` is optional and is used only for database completion/diagnostics
+- Python 3.10 or newer.
+- An Odoo source checkout or an installed `odoo` executable.
+- `psql` for database completion, `db list`, and database-aware `addon list`.
 
-Odoo and PostgreSQL are external dependencies; `odoorun` does not install or
-configure them.
+Launching Odoo and listing addons from the filesystem do not require `psql`.
 
 ## Installation
 
-### Recommended: install from PyPI
-
-Once published, install it on any supported machine with:
+Install the published package as an isolated command:
 
 ```bash
 uv tool install odoorun
 ```
 
-Or use pip:
+Or install with pip:
 
 ```bash
 python -m pip install odoorun
 ```
 
-### Install directly from GitHub
+Install the latest source directly from GitHub:
 
 ```bash
 uv tool install git+https://github.com/khalid99io/odoorun.git
 ```
 
-### Install a local checkout (development)
-
-```bash
-uv tool install .
-```
-
-After changing the checkout, refresh the installed command:
+Install or refresh a local development checkout:
 
 ```bash
 uv tool install --force .
 ```
 
-## Usage
+## Quick start
 
-Run from an Odoo source checkout or any directory below it:
+Run Odoo with ordinary Odoo options:
 
 ```bash
 odoorun -d my_database --dev=all
+odoorun -d my_database -u sale_management
 ```
 
-The short command `o` is optional and is not installed by this package. If
-desired, add your own alias or shell function:
+Add custom directories to an Odoo source checkout. Relative `-a` paths are
+resolved from the checkout's parent directory:
+
+```bash
+odoorun -a custom-addons,enterprise -d my_database
+```
+
+Use Odoo's native addon preference unchanged:
+
+```bash
+odoorun --addons-path="addons,custom-addons" -d my_database
+```
+
+The optional short alias is:
 
 ```bash
 alias o=odoorun
 ```
 
-### Database name completion
+## How executable discovery works
 
-Enable Bash completion for the current terminal:
+odoorun selects the first available executor in this order:
 
-```bash
-source <(odoorun completion bash)
-```
+1. An executable `odoo-bin` in the current directory or a parent directory.
+2. `~/venvs/<project>/bin/odoo` or the configured venv equivalent.
+3. An `odoo` command available on `PATH`.
 
-To enable it automatically in every new Bash terminal, run this once:
+For source checkouts, the built-in `addons` directory is passed automatically.
+For linked-venv projects, `--addons=odoo/addons` is added unless the user
+provides `--addons`, `--addons-path`, or an equivalent value explicitly.
 
-```bash
-odoorun completion install
-```
-
-This adds an idempotent source line to `~/.bashrc`. Completion is registered
-for `odoorun`, `o`, `odoo`, `odoo-bin`, and `./odoo-bin`.
-
-After that, type a database prefix after `-d` or `--database` and press Tab:
-
-```bash
-o -d demo<Tab>
-odoorun --database=demo<Tab>
-```
-
-Database names are read through `psql`. Existing PostgreSQL connection
-environment variables such as `PGHOST`, `PGPORT`, `PGUSER`, and `PGPASSWORD`
-are respected automatically.
-
-Module names are also completed for Odoo's `-u`/`--update` and `-i`/`--init`
-options, including comma-separated module lists:
-
-```bash
-o -d my_database -u sale_m<Tab>,bas<Tab>
-o -d my_database -i custom_m<Tab>
-```
-
-odoorun discovers modules containing `__manifest__.py` or `__openerp__.py`
-from the source checkout, custom paths supplied with `-a` or native
-`--addons-path`, the project's `odoo/addons` directory, and the linked virtual
-environment's installed `odoo/addons` directory.
-
-### Virtual-environment projects
-
-For a project directory named `my-project`, `odoorun` looks for:
-
-```text
-~/venvs/my-project/bin/odoo
-```
-
-When found, it adds `--addons=odoo/addons` automatically. If the virtual
-environment has a different name, configure it without editing the package:
+If the project and venv names differ, configure discovery with:
 
 ```bash
 export ODOORUN_VENV_NAME=my-project-venv
 export ODOORUN_VENV_ROOT="$HOME/venvs"
 ```
 
-The tool invokes the venv executable directly; sourcing `activate` is not
-required for the launched Odoo process. A subprocess cannot change the parent
-shell's prompt, so prompt decoration remains a shell responsibility.
+odoorun invokes the venv executable directly, so activating the venv is not
+required for the Odoo child process. A child process cannot alter the parent
+shell prompt; prompt decoration remains a shell responsibility.
 
-### Odoo source checkouts
+## Command reference
 
-For a checkout containing an executable `odoo-bin`, the built-in `addons`
-directory is passed automatically. Additional addon directories can be listed
-with `-a`; relative paths are resolved from the checkout's parent directory:
+### Odoo passthrough
 
-```bash
-odoorun -a custom-addons,enterprise -d my_database
+```text
+odoorun [ODOO_OPTIONS]
 ```
 
-Each directory must exist. Missing directories are reported before Odoo starts.
-Alternatively, pass Odoo's native `--addons-path` option directly. When it is
-present, odoorun leaves it unchanged and does not add or validate its own path:
+Arguments whose first item is not an odoorun tool command are passed to the
+discovered Odoo executable. The `-a` option is odoorun's source-checkout
+convenience and is converted into the effective native `--addons-path`.
 
-```bash
-odoorun --addons-path="addons,custom-addons" -d my_database
-```
+### `odoorun doctor`
 
-This lets users fully control Odoo's native addons-path behavior.
-
-## Diagnostics
-
-```bash
+```text
 odoorun doctor
-odoorun --help
-odoorun --version
 ```
 
-## Inspection commands
+Displays the working directory, discovered Odoo executable, and whether `psql`
+is available. It does not modify the project or start Odoo.
 
-### Databases
+### `odoorun completion`
 
-List Odoo databases and detect their versions:
+```text
+odoorun completion [bash|install]
+```
+
+- `bash` prints the generated Bash integration script.
+- `install` idempotently adds `source <(odoorun completion bash)` to `~/.bashrc`.
+
+Run the installer once and open a new Bash terminal:
+
+```bash
+odoorun completion install
+```
+
+Completion is registered for `odoorun`, `o`, `odoo`, `odoo-bin`, and
+`./odoo-bin`.
+
+Database examples:
+
+```bash
+o -d demo<Tab>
+odoorun --database=demo<Tab>
+```
+
+Module examples, including comma-separated values:
+
+```bash
+o -d my_database -u sale_m<Tab>,bas<Tab>
+o -d my_database -i custom_m<Tab>
+```
+
+Database completion uses `psql` and respects PostgreSQL environment variables
+such as `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, and `PGPASSWORD`. Module
+completion finds directories containing `__manifest__.py` or `__openerp__.py`
+in source, project, explicit, and linked-venv addon roots.
+
+### `odoorun db list`
+
+```text
+odoorun db list [OPTIONS]
+```
+
+Options:
+
+- `--odoo-version VERSION`: keep Odoo databases whose installed `base` module
+  version starts with `VERSION`, such as `19` or `19.0`.
+- `--all`: include regular PostgreSQL and inaccessible databases.
+- `--format table|plain|json`: select the output format; default is `table`.
+- `--no-header`: hide headings in table/plain output.
+
+Examples:
 
 ```bash
 odoorun db list
 odoorun db list --odoo-version 19
+odoorun db list --all --format json
 ```
 
-Use `--all` to include non-Odoo or inaccessible PostgreSQL databases.
+By default, only databases recognized as Odoo databases are shown. Detection
+uses `ir_module_module`, and the displayed Odoo version comes from the installed
+`base` module.
 
-### Addons
+### `odoorun addon list`
 
-List addons available to the current project:
+```text
+odoorun addon list [OPTIONS]
+```
+
+Options:
+
+- `-d, --database DATABASE`: query `ir_module_module` and annotate filesystem
+  addons with their state/version in that database.
+- `--source all|core|custom`: filter by addon-root origin.
+- `--state all|installed|uninstalled|upgrade`: filter by database state;
+  non-`all` values require `-d`.
+- `--installed`: shortcut for `--state installed`; requires `-d`.
+- `--custom`: shortcut for `--source custom`.
+- `--addons-path PATHS`: override discovery with a native comma-separated Odoo
+  addon path.
+- `-a PATHS`: add comma-separated custom directories to source-checkout
+  discovery.
+- `--format table|plain|json`: select the output format; default is `table`.
+- `--no-header`: hide headings in table/plain output.
+
+Examples:
 
 ```bash
 odoorun addon list
-odoorun addon list --source custom
 odoorun addon list --source core
+odoorun addon list --custom
+odoorun addon list -d my_database
+odoorun addon list -d my_database --installed --custom
+odoorun addon list --addons-path="addons,../enterprise"
 ```
 
-Add a database to include and filter its module installation state:
+Addon discovery always starts from filesystem directories. Supplying `-d`
+does not search addons inside a database; it only adds database state/version
+information and enables state filtering.
+
+### `odoorun --version`
+
+Print the installed odoorun version and exit:
 
 ```bash
-odoorun addon list -d my_database --state installed
-odoorun addon list -d my_database --installed --custom
+odoorun --version
 ```
 
-The `--installed` and `--custom` flags are shortcuts for `--state installed`
-and `--source custom`. Native `--addons-path` and the custom `-a` option are
-also supported.
+Every tool command has focused help:
 
-Both command groups support `--format table`, `--format plain`, and
-`--format json`, plus `--no-header` for table/plain output.
+```bash
+odoorun completion --help
+odoorun db list --help
+odoorun addon list --help
+```
+
+## PostgreSQL connection behavior
+
+Database features execute read-only queries through `psql`. Standard libpq
+configuration is respected, including environment variables, service files,
+and `.pgpass`. Passwords are not accepted as odoorun command-line options.
 
 ## Development
+
+Run tests and source compilation checks:
 
 ```bash
 uv run python -m unittest discover -s tests -v
 uv run python -m compileall -q src tests
 ```
 
-## Publishing
+The GitHub CI workflow installs, tests, compiles, and builds the project on
+Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests.
 
-The source repository is hosted on GitHub:
+## License and publishing
+
+odoorun is released under the MIT License. The source repository is:
 
 https://github.com/khalid99io/odoorun
 
-To publish releases on PyPI, create a PyPI account, configure a trusted
-publisher for this GitHub repository (recommended), build the package, and
-upload it with `twine` or a GitHub Actions release workflow. A GitHub account
-is required for the repository; a separate PyPI account is required to publish
-the `odoorun` package name.
-
-Before the first release, update the version in `pyproject.toml`, add release
-notes, and verify the package in a clean virtual environment.
+PyPI releases use the GitHub Actions Trusted Publisher workflow. Before a new
+release, update the version in `pyproject.toml`, verify CI, and push a matching
+version tag.

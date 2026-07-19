@@ -1,6 +1,6 @@
 """Shell integration for odoorun's dynamic completions."""
 
-BASH_COMPLETION = r'''# Bash completion for odoorun database names.
+BASH_COMPLETION = r'''# Bash completion for odoorun database and module names.
 _odoorun_complete() {
     local current previous prefix value leading selected suggestion
     COMPREPLY=()
@@ -55,4 +55,8 @@ complete -F _odoorun_complete odoo-bin
 complete -F _odoorun_complete ./odoo-bin
 '''
 
-BASH_COMPLETION_SOURCE = "# odoorun database completion\nsource <(odoorun completion bash)\n"
+BASH_COMPLETION_COMMAND = "source <(odoorun completion bash)"
+BASH_COMPLETION_SOURCE = (
+    "# odoorun database and module completion\n"
+    f"{BASH_COMPLETION_COMMAND}\n"
+)
