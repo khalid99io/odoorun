@@ -79,9 +79,10 @@ def shell_completion(
 def internal_completion(
     kind: str,
     prefix: Annotated[str, typer.Argument()] = "",
+    arguments: Annotated[list[str] | None, typer.Argument()] = None,
 ) -> None:
     """Return completion candidates for the shell integration."""
-    for candidate in complete_value(kind, prefix):
+    for candidate in complete_value(kind, prefix, arguments):
         typer.echo(candidate)
 
 

@@ -1,15 +1,14 @@
-from collections.abc import Callable
-
-from . import database
-
-Completer = Callable[[str], list[str]]
-
-COMPLETERS: dict[str, Completer] = {
-    "database": database.complete,
-}
+from . import database, module
 
 
-def complete(kind: str, prefix: str) -> list[str]:
+def complete(
+    kind: str,
+    prefix: str,
+    arguments: list[str] | None = None,
+) -> list[str]:
     """Return completion candidates for a registered completion kind."""
-    completer = COMPLETERS.get(kind)
-    return completer(prefix) if completer is not None else []
+    if kind == "database":
+        return database.complete(prefix)
+    if kind == "module":
+        return module.complete(prefix, arguments)
+    return []

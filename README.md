@@ -93,6 +93,19 @@ Database names are read through `psql`. Existing PostgreSQL connection
 environment variables such as `PGHOST`, `PGPORT`, `PGUSER`, and `PGPASSWORD`
 are respected automatically.
 
+Module names are also completed for Odoo's `-u`/`--update` and `-i`/`--init`
+options, including comma-separated module lists:
+
+```bash
+o -d my_database -u sale_m<Tab>,bas<Tab>
+o -d my_database -i custom_m<Tab>
+```
+
+odoorun discovers modules containing `__manifest__.py` or `__openerp__.py`
+from the source checkout, custom paths supplied with `-a` or native
+`--addons-path`, the project's `odoo/addons` directory, and the linked virtual
+environment's installed `odoo/addons` directory.
+
 ### Virtual-environment projects
 
 For a project directory named `my-project`, `odoorun` looks for:

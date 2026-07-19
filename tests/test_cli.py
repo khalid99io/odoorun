@@ -50,7 +50,7 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.stdout.splitlines(), ["demo", "demo_test"])
-        complete.assert_called_once_with("database", "dem")
+        complete.assert_called_once_with("database", "dem", None)
 
     @patch("odoorun.cli.shutil.which", return_value=None)
     @patch("odoorun.cli.find_odoo_executable")
