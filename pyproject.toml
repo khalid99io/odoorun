@@ -1,6 +1,6 @@
 [project]
 name = "odoorun"
-version = "0.1.0"
+version = "0.1.1"
 description = "A modern CLI for running and managing Odoo projects."
 readme = "README.md"
 license = { text = "MIT" }
