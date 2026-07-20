@@ -5,8 +5,8 @@ development projects. It discovers the appropriate Odoo executable, prepares
 addon paths, forwards ordinary Odoo options, completes database and module
 names, and provides read-only database/addon inspection commands.
 
-No symlink, alias, or machine-specific path is required. The optional `o` alias
-and Bash completion are shell conveniences.
+No symlink, alias, or machine-specific path is required. Run
+`odoorun completion install` once to enable Bash auto-completion.
 
 ## Features
 
@@ -23,7 +23,6 @@ and Bash completion are shell conveniences.
 ## Requirements
 
 - Python 3.10 or newer.
-- An Odoo source checkout or an installed `odoo` executable.
 - `psql` for database completion, `db list`, and database-aware `addon list`.
 
 Launching Odoo and listing addons from the filesystem do not require `psql`.
@@ -76,18 +75,16 @@ Use Odoo's native addon preference unchanged:
 odoorun --addons-path="addons,custom-addons" -d my_database
 ```
 
-The optional short alias is:
-
-```bash
-alias o=odoorun
-```
+The short `o` command is optional. If you configure `alias o=odoorun`, the
+examples below can use `o`; otherwise use `odoorun` directly.
 
 ## How executable discovery works
 
 odoorun selects the first available executor in this order:
 
 1. An executable `odoo-bin` in the current directory or a parent directory.
-2. `~/venvs/<project>/bin/odoo` or the configured venv equivalent.
+2. An Odoo executor in the linked or configured project venv, such as
+   `~/venvs/<project>/bin/odoo`.
 3. An `odoo` command available on `PATH`.
 
 For source checkouts, the built-in `addons` directory is passed automatically.
