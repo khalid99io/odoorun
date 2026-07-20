@@ -41,11 +41,12 @@ class CliTests(unittest.TestCase):
         self.assertIn("not find addons in a database", result.stdout)
         self.assertIn("ir_module_module state", result.stdout)
 
-    def test_prints_bash_database_completion(self) -> None:
+    def test_prints_bash_completion(self) -> None:
         result = self.runner.invoke(cli, ["completion", "bash"])
 
         self.assertEqual(result.exit_code, 0)
         self.assertIn('previous" == "-d"', result.stdout)
+        self.assertIn('__complete command -- "$current"', result.stdout)
         self.assertIn("complete -F _odoorun_complete odoorun", result.stdout)
         self.assertIn("complete -F _odoorun_complete o", result.stdout)
 
@@ -58,7 +59,8 @@ class CliTests(unittest.TestCase):
 
             self.assertEqual(first.exit_code, 0)
             self.assertEqual(second.exit_code, 0)
-            self.assertEqual(bashrc.read_text(encoding="utf-8").count("source <(odoorun completion bash)"), 1)
+            source = bashrc.read_text(encoding="utf-8")
+            self.assertEqual(source.count("source <(odoorun completion bash)"), 1)
 
     @patch("odoorun.cli.complete_value", return_value=["demo", "demo_test"])
     def test_internal_completion_prints_database_candidates(self, complete) -> None:
@@ -67,6 +69,15 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.stdout.splitlines(), ["demo", "demo_test"])
         complete.assert_called_once_with("database", "dem", None)
+
+    def test_internal_completion_prints_command_candidates(self) -> None:
+        result = self.runner.invoke(
+            cli,
+            ["__complete", "command", "--", "--s", "addon", "list"],
+        )
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.splitlines(), ["--source", "--state"])
 
     @patch("odoorun.cli.shutil.which", return_value=None)
     @patch("odoorun.cli.find_odoo_executable")

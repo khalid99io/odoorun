@@ -15,6 +15,7 @@ and Bash completion are shell conveniences.
 - Configure standard and custom addon paths automatically.
 - Complete PostgreSQL database names after `-d`/`--database`.
 - Complete module names after `-u`/`--update` and `-i`/`--init`.
+- Complete odoorun commands, options, and fixed option values.
 - List Odoo databases and detect their versions.
 - List core/custom addon manifests and optionally show database module state.
 - Produce human-readable tables, tab-separated text, or JSON.
@@ -140,8 +141,19 @@ Run the installer once and open a new Bash terminal:
 odoorun completion install
 ```
 
-Completion is registered for `odoorun`, `o`, `odoo`, `odoo-bin`, and
-`./odoo-bin`.
+Command and option completion is available for `odoorun` and `o`:
+
+```bash
+o d<Tab>                         # db, doctor
+o db <Tab>                       # list
+o addon list --s<Tab>            # --source, --state
+o addon list --source c<Tab>     # core, custom
+o addon list --state in<Tab>     # installed
+o db list --format j<Tab>        # json
+```
+
+Database and module completion is also registered for direct Odoo commands:
+`odoo`, `odoo-bin`, and `./odoo-bin`.
 
 Database examples:
 
@@ -203,6 +215,7 @@ Options:
   non-`all` values require `-d`.
 - `--installed`: shortcut for `--state installed`; requires `-d`.
 - `--custom`: shortcut for `--source custom`.
+- `--core`: shortcut for `--source core`.
 - `--addons-path PATHS`: override discovery with a native comma-separated Odoo
   addon path.
 - `-a PATHS`: add comma-separated custom directories to source-checkout

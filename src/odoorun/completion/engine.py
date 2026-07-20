@@ -1,4 +1,4 @@
-from . import database, module
+from . import command, database, module
 
 
 def complete(
@@ -11,4 +11,6 @@ def complete(
         return database.complete(prefix)
     if kind == "module":
         return module.complete(prefix, arguments)
+    if kind == "command":
+        return command.complete(prefix, arguments)
     return []

@@ -20,6 +20,7 @@ app = typer.Typer(
         "Examples:\n"
         "  odoorun addon list\n"
         "  odoorun addon list --custom\n"
+        "  odoorun addon list --core\n"
         "  odoorun addon list -d demo --installed --custom\n"
         "  odoorun addon list --addons-path addons,../enterprise"
     ),
@@ -75,6 +76,7 @@ def _matches_state(actual: str, requested: AddonState) -> bool:
     epilog=(
         "Examples:\n\n"
         "  odoorun addon list --custom\n\n"
+        "  odoorun addon list --core\n\n"
         "  odoorun addon list -d demo --installed --custom\n\n"
         "  odoorun addon list --addons-path addons,../enterprise"
     ),
@@ -120,6 +122,13 @@ def list_addons(
         typer.Option(
             "--custom",
             help="Show only project/custom addons; shortcut for --source custom.",
+        ),
+    ] = False,
+    core: Annotated[
+        bool,
+        typer.Option(
+            "--core",
+            help="Show only Odoo core addons; shortcut for --source core.",
         ),
     ] = False,
     addons_path: Annotated[
@@ -168,10 +177,20 @@ def list_addons(
         if state != AddonState.all:
             raise typer.BadParameter("use either --installed or --state, not both")
         state = AddonState.installed
-    if custom:
-        if source != AddonSource.all:
-            raise typer.BadParameter("use either --custom or --source, not both")
-        source = AddonSource.custom
+    source_shortcuts = [
+        value
+        for enabled, value in (
+            (custom, AddonSource.custom),
+            (core, AddonSource.core),
+        )
+        if enabled
+    ]
+    if source_shortcuts:
+        if source != AddonSource.all or len(source_shortcuts) > 1:
+            raise typer.BadParameter(
+                "use only one of --source, --custom, or --core"
+            )
+        source = source_shortcuts[0]
     if state != AddonState.all and not database:
         raise typer.BadParameter("--state/--installed requires --database")
 

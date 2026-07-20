@@ -36,13 +36,13 @@ HELP_EPILOG = (
     "Odoo versions.\n\n"
     "[cyan]odoorun addon list[/cyan] [-d DATABASE] "
     "[--source all|core|custom] [--state all|installed|uninstalled|upgrade] "
-    "[--installed] [--custom] [--addons-path PATHS] [-a PATHS] "
+    "[--installed] [--custom] [--core] [--addons-path PATHS] [-a PATHS] "
     "[--format table|plain|json] [--no-header] — List filesystem addons and "
     "optional database state.\n\n"
     "[bold]Automatic completion[/bold]\n\n"
-    "After [cyan]odoorun completion install[/cyan], press Tab after "
-    "-d/--database for database names and after -u/--update or -i/--init for "
-    "module names.\n\n"
+    "After [cyan]odoorun completion install[/cyan], press Tab to complete "
+    "commands and options, after -d/--database for database names, and after "
+    "-u/--update or -i/--init for module names.\n\n"
     "Run [bold]odoorun COMMAND --help[/bold] for detailed command examples."
 )
 
@@ -101,7 +101,7 @@ def shell_completion(
         ),
     ] = "bash",
 ) -> None:
-    """Enable Bash completion for database and module names."""
+    """Enable Bash completion for commands, options, databases, and modules."""
     if mode == "install":
         bashrc = Path.home() / ".bashrc"
         existing = bashrc.read_text(encoding="utf-8") if bashrc.exists() else ""

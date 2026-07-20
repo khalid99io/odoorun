@@ -2,7 +2,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from odoorun.completion import database
+from odoorun.completion import command, database
 from odoorun.completion.engine import complete
 
 
@@ -28,6 +28,43 @@ class DatabaseCompletionTests(unittest.TestCase):
 
     def test_unknown_completion_kind_returns_no_results(self) -> None:
         self.assertEqual(complete("unknown", ""), [])
+
+
+class CommandCompletionTests(unittest.TestCase):
+    def test_completes_root_commands(self) -> None:
+        self.assertEqual(command.complete("d"), ["doctor", "db"])
+
+    def test_completes_group_subcommands(self) -> None:
+        self.assertEqual(command.complete("", ["db"]), ["list", "--help"])
+
+    def test_completes_addon_options(self) -> None:
+        self.assertEqual(
+            command.complete("--s", ["addon", "list"]),
+            ["--source", "--state"],
+        )
+
+    def test_completes_separate_and_attached_option_values(self) -> None:
+        self.assertEqual(
+            command.complete("c", ["addon", "list", "--source"]),
+            ["core", "custom"],
+        )
+        self.assertEqual(
+            command.complete("--state=in", ["addon", "list"]),
+            ["--state=installed"],
+        )
+        self.assertEqual(
+            command.complete("j", ["db", "list", "--format"]),
+            ["json"],
+        )
+
+    def test_completes_completion_modes(self) -> None:
+        self.assertEqual(
+            command.complete("", ["completion"]),
+            ["bash", "install", "--help"],
+        )
+
+    def test_does_not_complete_odoo_passthrough_arguments(self) -> None:
+        self.assertEqual(command.complete("--", ["-d", "demo"]), [])
 
 
 if __name__ == "__main__":

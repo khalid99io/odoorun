@@ -72,6 +72,44 @@ class ManagementCommandTests(unittest.TestCase):
         self.assertNotEqual(response.exit_code, 0)
         self.assertIn("requires --database", strip_ansi(response.output))
 
+    @patch("odoorun.commands.addon.Path.cwd")
+    def test_core_shortcut_filters_custom_addons(self, cwd) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            parent = Path(temporary_directory)
+            repo = parent / "odoo"
+            executable = repo / "odoo-bin"
+            executable.parent.mkdir()
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+
+            for root, addon_name in (
+                (repo / "addons", "sale_core"),
+                (parent / "custom-addons", "sale_custom"),
+            ):
+                addon = root / addon_name
+                addon.mkdir(parents=True)
+                (addon / "__manifest__.py").write_text("{}\n", encoding="utf-8")
+
+            cwd.return_value = repo
+            response = self.runner.invoke(
+                cli,
+                [
+                    "addon",
+                    "list",
+                    "--core",
+                    "-a",
+                    "custom-addons",
+                    "--format",
+                    "json",
+                ],
+            )
+
+        self.assertEqual(response.exit_code, 0)
+        self.assertEqual(
+            [row["addon"] for row in json.loads(response.stdout)],
+            ["sale_core"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
